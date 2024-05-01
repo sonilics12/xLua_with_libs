@@ -108,22 +108,23 @@ public static class ExampleGenConfig
         if (!type.IsGenericType) return false;
         return BlackGenericTypeList.Contains(type.GetGenericTypeDefinition());
     }
+#if UNITY_2022_1_OR_NEWER
+    // [BlackList] public static Func<MemberInfo, bool> GenericTypeFilter = (memberInfo) =>
+    // {
+    //     switch (memberInfo)
+    //     {
+    //         case PropertyInfo propertyInfo:
+    //             return IsBlacklistedGenericType(propertyInfo.PropertyType);
 
-    [BlackList] public static Func<MemberInfo, bool> GenericTypeFilter = (memberInfo) =>
-    {
-        switch (memberInfo)
-        {
-            case PropertyInfo propertyInfo:
-                return IsBlacklistedGenericType(propertyInfo.PropertyType);
+    //         case ConstructorInfo constructorInfo:
+    //             return constructorInfo.GetParameters().Any(p => IsBlacklistedGenericType(p.ParameterType));
 
-            case ConstructorInfo constructorInfo:
-                return constructorInfo.GetParameters().Any(p => IsBlacklistedGenericType(p.ParameterType));
+    //         case MethodInfo methodInfo:
+    //             return methodInfo.GetParameters().Any(p => IsBlacklistedGenericType(p.ParameterType));
 
-            case MethodInfo methodInfo:
-                return methodInfo.GetParameters().Any(p => IsBlacklistedGenericType(p.ParameterType));
-
-            default:
-                return false;
-        }
-    };
+    //         default:
+    //             return false;
+    //     }
+    // };
+#endif
 }
