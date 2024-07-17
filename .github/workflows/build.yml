@@ -108,7 +108,7 @@ jobs:
           path: ./build/plugin_luajit/**/*
           name: plugin_luajit
   osx:
-    runs-on: macos-11
+    runs-on: macos-12
 
     steps:
       - uses: actions/checkout@v2
