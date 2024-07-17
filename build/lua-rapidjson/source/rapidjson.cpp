@@ -353,10 +353,11 @@ struct Key
 class Encoder {
 	bool pretty;
 	bool sort_keys;
+	bool empty_table_as_array;
 	int max_depth;
 	static const int MAX_DEPTH_DEFAULT = 128;
 public:
-	Encoder(lua_State*L, int opt) : pretty(false), sort_keys(false), max_depth(MAX_DEPTH_DEFAULT)
+	Encoder(lua_State*L, int opt) : pretty(false), sort_keys(false), empty_table_as_array(false), max_depth(MAX_DEPTH_DEFAULT)
 	{
 		if (lua_isnoneornil(L, opt))
 			return;
@@ -364,6 +365,7 @@ public:
 
 		pretty = optBooleanField(L, opt, "pretty", false);
 		sort_keys = optBooleanField(L, opt, "sort_keys", false);
+		empty_table_as_array = optBooleanField(L, opt, "empty_table_as_array", false);
 		max_depth = optIntegerField(L, opt, "max_depth", MAX_DEPTH_DEFAULT);
 	}
 
@@ -441,13 +443,23 @@ private:
 		return has;
 	}
 
-	static bool isArray(lua_State* L, int idx)
+	static bool isArray(lua_State* L, int idx, bool empty_table_as_array = false)
 	{
 		bool isarray = false;
 		if (hasJsonType(L, idx, isarray)) // any table with a meta field __jsontype set to 'array' are arrays
 			return isarray;
 
-		return (lua_rawlen(L, idx) > 0); // any table has length > 0 are treat as array.
+		lua_pushvalue(L, idx);
+		lua_pushnil(L);
+		if (lua_next(L, -2) != 0) {
+			lua_pop(L, 3);
+
+			return lua_rawlen(L, idx) > 0; // any non empty table has length > 0 are treat as array.
+		}
+
+		lua_pop(L, 1);
+		// Now it comes empty table
+		return empty_table_as_array;
 	}
 
 	template<typename Writer>
@@ -516,7 +528,7 @@ private:
 			luaL_error(L, "stack overflow");
 
 		lua_pushvalue(L, idx); // [table]
-		if (isArray(L, -1))
+		if (isArray(L, -1, empty_table_as_array))
 		{
 			encodeArray(L, writer, depth);
 			lua_pop(L, 1); // []
